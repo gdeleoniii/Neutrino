@@ -11,11 +11,15 @@
 #include <TCanvas.h>
 #include <TF1.h>
 #include <TLegend.h>
+#include <TLatex.h>
+#include <TPad.h>
+#include <TStyle.h>
 #include "untuplizer.h"
 #include <TClonesArray.h>
 #include <TLorentzVector.h>
-#include "setNCUStyle.C"
-
+//#include "setNCUStyle.C"
+//#include "additional_style.C"
+//#include "twopads.C"
 
 using namespace std;
 void neutrino(std::string inputFile) {
@@ -23,14 +27,14 @@ void neutrino(std::string inputFile) {
   //get TTree from file ...
   TreeReader data(inputFile.data());
 
-  TH2F *h_leadJet_neuP4 = new TH2F("","",100,0,3600,100,0,860);
-  TH2F *h_leadJet_nNeu  = new TH2F("","",36,0,3600,10,0,10);
-  TH2F *h_leadPR_neuP4  = new TH2F("","",100,0,3600,100,0,860);
-  TH2F *h_leadPR_nNeu   = new TH2F("","",100,0,3600,100,0,860);
-  TH2F *h_sublJet_neuP4 = new TH2F("","",100,0,3600,100,0,860);
-  TH2F *h_sublJet_nNeu  = new TH2F("","",100,0,3600,100,0,860);
-  TH2F *h_sublPR_neuP4  = new TH2F("","",100,0,3600,100,0,860);
-  TH2F *h_sublPR_nNeu   = new TH2F("","",100,0,3600,100,0,860);
+  TH2F *h_leadJet_neuP4 = new TH2F("","",75,0,4000,50,0,860);
+  TH2F *h_leadJet_nNeu  = new TH2F("","",36,0,4000,20,0,20);
+  TH2F *h_leadPR_neuP4  = new TH2F("","",100,0,3600,100,0,860);//
+  TH2F *h_leadPR_nNeu   = new TH2F("","",80,0,800,20,0,20);//
+  TH2F *h_sublJet_neuP4 = new TH2F("","",75,0,2800,75,0,900);
+  TH2F *h_sublJet_nNeu  = new TH2F("","",40,0,2800,20,0,20);
+  TH2F *h_sublPR_neuP4  = new TH2F("","",100,0,3600,100,0,860);//
+  TH2F *h_sublPR_nNeu   = new TH2F("","",100,0,3600,100,0,860);//
 
   //Event loop
   for(Long64_t jEntry=0; jEntry<data.GetEntriesFast() ;jEntry++){
@@ -127,7 +131,7 @@ void neutrino(std::string inputFile) {
       int da2_pid = abs(genDa2[ig]);
        
       if(da1_pid == pid && (da2_pid<500 && da2_pid>400)) mom_pid < 500; 
-      if(da1_pid == pid && (da2_pid<600 && da2_pid>99 )) mom_pid > 500;
+      if(da1_pid == pid && (da2_pid<600 && da2_pid>100)) mom_pid > 500;
       
       if(mom_pid < 400 || mom_pid > 600)continue;
       
@@ -136,28 +140,73 @@ void neutrino(std::string inputFile) {
       //if(thisGen->DeltaR(*subljet)>0.8)continue;
       //if(thisGen->DeltaR(*PRleadjet)>0.8)continue;
       //if(thisGen->DeltaR(*PRsubljet)>0.8)continue;
+      
       n_neutrinos++;
       neutrinos_p4 += *thisGen; 
       
     }
-    
+
     h_leadJet_neuP4->Fill(leadjet->Pt(),neutrinos_p4.Pt()); 
-    h_leadJet_nNeu->Fill(leadjet->Pt(),n_neutrinos);    
-    //h_leadPR_neuP4->Fill(fatjetPRmass[leadPR],neutrinosp4.Pt());
+    h_leadJet_nNeu->Fill(leadjet->Pt(),n_neutrinos);
+    //h_leadPR_neuP4->Fill(fatjetPRmass[leadPR],neutrinos_p4.M());
     //h_leadPR_nNeu->Fill(fatjetPRmass[leadPR],n_neutrinos);
     //h_sublJet_neuP4->Fill(subljet->Pt(),neutrinos_p4.Pt());
     //h_sublJet_nNeu->Fill(subljet->Pt(),n_neutrinos); 
-    ///h_sublPR_neuP4->Fill(fatjetPRmass[sublPR],neutrinosp4.Pt());
+    //h_sublPR_neuP4->Fill(fatjetPRmass[sublPR],neutrinos_p4.M());
     //h_sublPR_nNeu->Fill(fatjetPRmass[sublPR],n_neutrinos);
-  
+    
 
   } // end of loop over entries
   
-  setNCUStyle();
-  TCanvas* c1 = new TCanvas("c1","c1",0,0,800,600);
-  c1->cd();
-  h_leadJet_neuP4->Draw("colz");
-  TCanvas* c2 = new TCanvas("c2","c2",0,0,800,600);
-  c2->cd();
-  h_leadJet_nNeu->Draw("colz");
+  //setNCUStyle();
+  //additional_style();
+  
+  
+    TCanvas* c1 = new TCanvas("c1","c1",0,0,900,600);
+    c1->cd();
+    h_leadJet_neuP4->Draw("colz");
+    h_leadJet_neuP4->SetStats(0);
+    h_leadJet_neuP4->SetXTitle("p_{T}^{Lead}");
+    h_leadJet_neuP4->SetYTitle("p_{T}^{neutrino}");
+    TCanvas* c2 = new TCanvas("c2","c2",0,0,900,600);
+    c2->cd();
+    h_leadJet_nNeu->Draw("colz");
+    h_leadJet_nNeu->SetStats(0);
+    h_leadJet_nNeu->SetXTitle("p_{T}^{Lead}");
+    h_leadJet_nNeu->SetYTitle("No. of neutrino");
+  
+    
+    /*
+      TCanvas* c1 = new TCanvas("c1","c1",0,0,900,600);
+      c1->cd();
+      h_leadPR_neuP4->Draw("colz");
+      TCanvas* c2 = new TCanvas("c2","c2",0,0,900,600);
+      c2->cd();
+      h_leadPR_nNeu->Draw("colz");
+    */
+    
+    /*
+      TCanvas* c1 =  new TCanvas("c1","c1",0,0,900,600);
+      c1->cd();
+      h_sublJet_neuP4->Draw("colz");
+      h_sublJet_neuP4->SetStats(0);
+      h_sublJet_neuP4->SetXTitle("p_{T}^{Sublead}");                                                                                                 
+      h_sublJet_neuP4->SetYTitle("p_{T}^{neutrino}");
+      TCanvas* c2 = new TCanvas("c2","c2",0,0,900,600);
+      c2->cd();
+      h_sublJet_nNeu->Draw("colz");
+      h_sublJet_nNeu->SetStats(0);
+      h_sublJet_nNeu->SetXTitle("p_{T}^{Sublead}");
+      h_sublJet_nNeu->SetYTitle("No. of neutrino");
+    */  
+    
+    /*
+      TCanvas* c1 = new TCanvas("c1","c1",0,0,800,600);
+      c1->cd();
+      h_sublPR_neuP4->Draw("colz");
+      TCanvas* c2 = new TCanvas("c2","c2",0,0,800,600);
+      c2->cd();
+      h_sublPR_nNeu->Draw("colz");
+    */
+    
 }
