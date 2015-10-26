@@ -17,9 +17,9 @@
 #include "untuplizer.h"
 #include <TClonesArray.h>
 #include <TLorentzVector.h>
-//#include "setNCUStyle.C"
-//#include "additional_style.C"
-//#include "twopads.C"
+#include "setNCUStyle.C"
+#include "additional_style.C"
+#include "twopads.C"
 
 using namespace std;
 void neutrino(std::string inputFile) {
@@ -43,9 +43,6 @@ void neutrino(std::string inputFile) {
       fprintf(stderr, "Processing event %lli of %lli\n", jEntry + 1, data.GetEntriesFast());
 
     data.GetEntry(jEntry);
-    
-    //0. has a good vertex
-    Int_t nVtx        = data.GetInt("nVtx");
 
     int nFATJet         = data.GetInt("FATnJet");
     const int nJets=nFATJet;
@@ -54,19 +51,16 @@ void neutrino(std::string inputFile) {
     Float_t*  fatjetCISVV2    = data.GetPtrFloat("FATjetCISVV2");
     Float_t*  fatjetSDmass    = data.GetPtrFloat("FATjetSDmass");
     Float_t*  fatjetPRmass    = data.GetPtrFloat("FATjetPRmass");
-    Int_t*    nSubSoftDropJet = data.GetPtrInt("FATnSubSDJet");
     Int_t     nGenPar         = data.GetInt("nGenPar");
     Int_t*    genParId        = data.GetPtrInt("genParId");
     Int_t*    genParSt        = data.GetPtrInt("genParSt");
     Int_t*    genMomParId     = data.GetPtrInt("genMomParId");
     Int_t*    genDa1          = data.GetPtrInt("genDa1");
     Int_t*    genDa2          = data.GetPtrInt("genDa2");
-    vector<float>   *subjetSDCSV =  data.GetPtrVectorFloat("FATsubjetSDCSV", nFATJet);
-    vector<float>   *subjetSDPx  =  data.GetPtrVectorFloat("FATsubjetSDPx", nFATJet);
-    vector<float>   *subjetSDPy  =  data.GetPtrVectorFloat("FATsubjetSDPy", nFATJet);
-    vector<float>   *subjetSDPz  =  data.GetPtrVectorFloat("FATsubjetSDPz", nFATJet);
     vector<bool>    &passFatJetLooseID = *((vector<bool>*) data.GetPtr("FATjetPassIDLoose"));
-    
+
+
+    //this is the cuts for the leading jets     
     vector<int> fatty;
     for(int ij=0; ij<nJets; ij++)
       {
@@ -84,6 +78,7 @@ void neutrino(std::string inputFile) {
       }
     
 
+    //this is the cuts for the jet pruned mass
     vector<int> pruned;
     for(int ij=0; ij<nJets; ij++)
       {
@@ -102,15 +97,15 @@ void neutrino(std::string inputFile) {
     if(fatty.size()<2)continue;
     if(pruned.size()<2)continue;
 
-    Int_t lead = fatty[0]; //first leading jet
-    Int_t subl = fatty[1]; //second leading jet
-    Int_t leadPR = pruned[0];
+    Int_t lead = fatty[0]; 
+    Int_t subl = fatty[1]; 
+    Int_t leadPR = pruned[0]; 
     Int_t sublPR = pruned[1];
 
-    TLorentzVector *leadjet = (TLorentzVector*)fatjetP4->At(lead);
-    TLorentzVector *subljet = (TLorentzVector*)fatjetP4->At(subl);
-    TLorentzVector *PRleadjet = (TLorentzVector*)fatjetP4->At(leadPR);
-    TLorentzVector *PRsubljet = (TLorentzVector*)fatjetP4->At(sublPR);
+    TLorentzVector *leadjet = (TLorentzVector*)fatjetP4->At(lead); //first leading jet
+    TLorentzVector *subljet = (TLorentzVector*)fatjetP4->At(subl); //second leading jet
+    TLorentzVector *PRleadjet = (TLorentzVector*)fatjetP4->At(leadPR); //first leading jet pruned mass
+    TLorentzVector *PRsubljet = (TLorentzVector*)fatjetP4->At(sublPR); //second leading jet pruned mass
     
     int n_neutrinos=0;
     TLorentzVector neutrinos_p4;
@@ -130,94 +125,94 @@ void neutrino(std::string inputFile) {
       int da1_pid = abs(genDa1[ig]);
       int da2_pid = abs(genDa2[ig]);
        
-      if(da1_pid == pid && (da2_pid<500 && da2_pid>400)) mom_pid < 500; 
-      if(da1_pid == pid && (da2_pid<600 && da2_pid>100)) mom_pid > 500;
+      if(da1_pid == pid && (da2_pid<500 && da2_pid>400)) mom_pid < 500; //b hadrons decaying to l nu + charm hadrons
+      if(da1_pid == pid && (da2_pid<600 && da2_pid>100)) mom_pid > 500; //charm hadrons decaying to l nu + other hadrons
       
       if(mom_pid < 400 || mom_pid > 600)continue;
       
       TLorentzVector* thisGen = (TLorentzVector*)genParP4->At(ig);
-      //if(thisGen->DeltaR(*leadjet)>0.8)continue;
+      if(thisGen->DeltaR(*leadjet)>0.8)continue;
       //if(thisGen->DeltaR(*subljet)>0.8)continue;
       //if(thisGen->DeltaR(*PRleadjet)>0.8)continue;
-      if(thisGen->DeltaR(*PRsubljet)>0.8)continue;
+      //if(thisGen->DeltaR(*PRsubljet)>0.8)continue;
       
       n_neutrinos++;
       neutrinos_p4 += *thisGen; 
       
     }
 
-    //h_leadJet_neuP4->Fill(leadjet->Pt(),neutrinos_p4.Pt()); 
-    //h_leadJet_nNeu->Fill(leadjet->Pt(),n_neutrinos);
+    h_leadJet_neuP4->Fill(leadjet->Pt(),neutrinos_p4.Pt()); 
+    h_leadJet_nNeu->Fill(leadjet->Pt(),n_neutrinos);
     //h_leadPR_neuP4->Fill(fatjetPRmass[leadPR],neutrinos_p4.Pt());
     //h_leadPR_nNeu->Fill(fatjetPRmass[leadPR],n_neutrinos);
     //h_sublJet_neuP4->Fill(subljet->Pt(),neutrinos_p4.Pt());
     //h_sublJet_nNeu->Fill(subljet->Pt(),n_neutrinos); 
-    h_sublPR_neuP4->Fill(fatjetPRmass[sublPR],neutrinos_p4.Pt());
-    h_sublPR_nNeu->Fill(fatjetPRmass[sublPR],n_neutrinos);
+    //h_sublPR_neuP4->Fill(fatjetPRmass[sublPR],neutrinos_p4.Pt());
+    //h_sublPR_nNeu->Fill(fatjetPRmass[sublPR],n_neutrinos);
     
 
   } // end of loop over entries
   
-  //setNCUStyle();
+  setNCUStyle();
   //additional_style();
   
-  /*
-    TCanvas* c1 = new TCanvas("c1","c1",0,0,900,600);
-    c1->cd();
-    h_leadJet_neuP4->Draw("colz");
-    h_leadJet_neuP4->SetStats(0);
-    h_leadJet_neuP4->SetXTitle("p_{T}^{Lead}");
-    h_leadJet_neuP4->SetYTitle("p_{T}^{neutrino}");
-    TCanvas* c2 = new TCanvas("c2","c2",0,0,900,600);
-    c2->cd();
-    h_leadJet_nNeu->Draw("colz");
-    h_leadJet_nNeu->SetStats(0);
-    h_leadJet_nNeu->SetXTitle("p_{T}^{Lead}");
-    h_leadJet_nNeu->SetYTitle("No. of neutrino");
-  */
+
+  TCanvas* c1 = new TCanvas("c1","c1",0,0,600,600);
+  c1->cd();
+  h_leadJet_neuP4->Draw("colz");
+  h_leadJet_neuP4->SetStats(0);
+  h_leadJet_neuP4->SetXTitle("p_{T}^{Lead}");
+  h_leadJet_neuP4->SetYTitle("p_{T}^{neutrino}");
+  TCanvas* c2 = new TCanvas("c2","c2",0,0,600,600);
+  c2->cd();
+  h_leadJet_nNeu->Draw("colz");
+  h_leadJet_nNeu->SetStats(0);
+  h_leadJet_nNeu->SetXTitle("p_{T}^{Lead}");
+  h_leadJet_nNeu->SetYTitle("No. of neutrino");
+    
     
   /*
-    TCanvas* c1 = new TCanvas("c1","c1",0,0,900,600);
-    c1->cd();
+    TCanvas* c3 = new TCanvas("c3","c3",0,0,600,600);
+    c3->cd();
     h_leadPR_neuP4->Draw("colz");
     h_leadPR_neuP4->SetStats(0);                                                                                                               
-    h_leadPR_neuP4->SetXTitle("M_{Pruned}");                                                                                       
+    h_leadPR_neuP4->SetXTitle("M_{Pruned Lead}");                                                                                       
     h_leadPR_neuP4->SetYTitle("p_{T}^{neutrino}");
-    TCanvas* c2 = new TCanvas("c2","c2",0,0,900,600);
-    c2->cd();
+    TCanvas* c4 = new TCanvas("c4","c4",0,0,600,600);
+    c4->cd();
     h_leadPR_nNeu->Draw("colz");
     h_leadPR_nNeu->SetStats(0);
-    h_leadPR_nNeu->SetXTitle("M_{Pruned}");
+    h_leadPR_nNeu->SetXTitle("M_{Pruned Lead}");
     h_leadPR_nNeu->SetYTitle("No. of neutrino");
   */
     
   /*
-    TCanvas* c1 =  new TCanvas("c1","c1",0,0,900,600);
-    c1->cd();
-    h_sublJet_neuP4->Draw("colz");
-    h_sublJet_neuP4->SetStats(0);
-    h_sublJet_neuP4->SetXTitle("p_{T}^{Sublead}");                                                                                                 
-    h_sublJet_neuP4->SetYTitle("p_{T}^{neutrino}");
-    TCanvas* c2 = new TCanvas("c2","c2",0,0,900,600);
-    c2->cd();
-    h_sublJet_nNeu->Draw("colz");
-    h_sublJet_nNeu->SetStats(0);
-    h_sublJet_nNeu->SetXTitle("p_{T}^{Sublead}");
-    h_sublJet_nNeu->SetYTitle("No. of neutrino");
+  TCanvas* c5 =  new TCanvas("c5","c5",0,0,600,600);
+  c5->cd();
+  h_sublJet_neuP4->Draw("col");
+  h_sublJet_neuP4->SetStats(0);
+  h_sublJet_neuP4->SetXTitle("p_{T}^{Sublead}");                                                                                                 
+  h_sublJet_neuP4->SetYTitle("p_{T}^{neutrino}");
+  TCanvas* c6 = new TCanvas("c6","c6",0,0,600,600);
+  c6->cd();
+  h_sublJet_nNeu->Draw("col");
+  h_sublJet_nNeu->SetStats(0);
+  h_sublJet_nNeu->SetXTitle("p_{T}^{Sublead}");
+  h_sublJet_nNeu->SetYTitle("No. of neutrino");
   */  
-  
-  
-    TCanvas* c1 = new TCanvas("c1","c1",0,0,800,600);
-    c1->cd();
+    
+  /*
+    TCanvas* c7 = new TCanvas("c7","c7",0,0,600,600);
+    c7->cd();
     h_sublPR_neuP4->Draw("colz");
     h_sublPR_neuP4->SetStats(0);
     h_sublPR_neuP4->SetXTitle("M_{Pruned Sublead}");
     h_sublPR_neuP4->SetYTitle("p_{T}^{neutrino}");
-    TCanvas* c2 = new TCanvas("c2","c2",0,0,800,600);
+    TCanvas* c8 = new TCanvas("c8","c8",0,0,600,600);
     c2->cd();
     h_sublPR_nNeu->Draw("colz");
     h_sublPR_nNeu->SetStats(0);
     h_sublPR_nNeu->SetXTitle("M_{Pruned Sublead}");
     h_sublPR_nNeu->SetYTitle("No. of neutrino");
-    
+  */    
 }
