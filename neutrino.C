@@ -31,8 +31,8 @@ void neutrino(std::string inputFile) {
   TH2F *h_leadJet_nNeu  = new TH2F("","",36,0,4000,20,0,20);
   TH2F *h_leadPR_neuP4  = new TH2F("","",100,0,180,90,0,900);//
   TH2F *h_leadPR_nNeu   = new TH2F("","",50,0,500,20,0,20);//
-  TH2F *h_sublJet_neuP4 = new TH2F("","",75,0,2800,75,0,900);
-  TH2F *h_sublJet_nNeu  = new TH2F("","",40,0,2800,20,0,20);
+  TH2F *h_sublJet_neuP4 = new TH2F("","",70,0,2800,45,0,900);
+  TH2F *h_sublJet_nNeu  = new TH2F("","",28,0,2800,20,0,20);
   TH2F *h_sublPR_neuP4  = new TH2F("","",100,0,180,90,0,900);//
   TH2F *h_sublPR_nNeu   = new TH2F("","",50,0,500,20,0,20);//
 
