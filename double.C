@@ -18,8 +18,6 @@
 #include "untuplizer.h"
 #include <TClonesArray.h>
 #include <TLorentzVector.h>
-//#include "setNCUStyle.C"      
-//#include "twopads.C"
  
 using namespace std;
 void dbt(std::string inputFile) {
@@ -54,7 +52,6 @@ void dbt(std::string inputFile) {
     TClonesArray* addjetP4 = (TClonesArray*) data.GetPtrTObject("ADDjetP4");
     
     vector<int> fatjet;
-    // Float_t del_R;
     for(int ij=0; ij<nFJets; ij++)
       {
 	
@@ -62,9 +59,6 @@ void dbt(std::string inputFile) {
 	if(thisJet->Pt()<300)continue;
 	if(fabs(thisJet->Eta())>2.5)continue;
 	if(!passFatJetLooseID[ij])continue;
-	//if(fatjetPRmass[ij]<40)continue;
-	//if(fatjetCISVV2[ij] < 0.605)continue;
-	//if(fatjetCISVV2[ij] > 1)continue;
 	if( FATnSubSDJet[ij] != 2 ) continue;
         if( FATsubjetSDCSV[ij][0] < 0.605 || FATsubjetSDCSV[ij][1] < 0.605 ) continue;  	
 
@@ -74,27 +68,15 @@ void dbt(std::string inputFile) {
     if(fatjet.size()<2)continue;
     TLorentzVector *leadfatjet = (TLorentzVector*)fatjetP4->At(fatjet[0]);
     
-   
     vector<int> addjet;
     Float_t del_R;
     for(int ad=0; ad<nAJets; ad++)
       {
-	
 	TLorentzVector* theseJet = (TLorentzVector*)addjetP4->At(ad);
-	
 	del_R = theseJet->DeltaR(*leadfatjet);
-	//addjet.push_back(ad);
-	//h_delR->Fill(theseJet->DeltaR(*leadfatjet));
       }
    
-    //if(addjet.size()<2)continue;
-    //TLorentzVector *leadaddjet = (TLorentzVector*)addjetP4->At(addjet[0]);
-    
-    // Float_t del_R = leadaddjet->DeltaR(*leadfatjet);
-
     h_delR->Fill(del_R);
-    //h_delR->Fill(leadaddjet->DeltaR(*leadfatjet));                  
-	  
   }
 
   h_delR->Draw();
